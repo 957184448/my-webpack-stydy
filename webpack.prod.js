@@ -1,7 +1,9 @@
 'use strict';
 
 const path = require('path');
-const webpack = require('webpack');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 //解析css 
 //需要用到css-loader 并且转换为commonjs对象插入到样式中
 //需要用到style-loader 将央视通过<style>标签插入到head中
@@ -21,7 +23,8 @@ module.exports = {
   },
   output: {//出口
     path: path.join(__dirname, 'dist'),//指定输出文件夹 dist 目录
-    filename: '[name].js'//打包出的文件名
+    filename: '[name]_[chunkhash:8].js',//打包出的文件名 chunkhash:8 文件指纹设置 取前8位 下划线为了区分
+
   },
   mode: 'production',
   module: {
@@ -35,14 +38,16 @@ module.exports = {
         use: [
           //loader是链式调用，执行顺序是从右到左 ，因此需要先治行css-loader，解析css
           //再将解析好的css传递给style-loader
-          'style-loader',
+          // 'style-loader',
+          MiniCssExtractPlugin.loader,
           'css-loader',
         ]
       },
       {
         test: /.less$/,
         use: [
-          'style-loader',
+          // 'style-loader',
+          MiniCssExtractPlugin.loader,
           'css-loader',
           'less-loader'
         ]
@@ -55,14 +60,35 @@ module.exports = {
         test: /.(png|jpg|gif|jpeg)$/,
         use: [
           {
-            loader: 'url-loader',
+            loader: 'file-loader',
             options: {
-              limit: 10240, // 10k大小 如果10k以下图片 自动打包成base64
+              // limit: 10240, // 10k大小 如果10k以下图片 自动打包成base64
+              name: '[name]_[hash:8][ext]',// 图片文件指纹
+            }
+          }
+        ]
+      },
+      {
+        test: /.(woff|woff2|eot|ttf|otf)$/, //字体文件指纹
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              // limit: 10240, // 10k大小 如果10k以下图片 自动打包成base64
+              name: '[name]_[hash:8][ext]',// 图片文件指纹
             }
           }
         ]
       },
     ]
   },
-
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name]_[contenthash:8]',
+    }),
+    new OptimizeCSSAssetsPlugin({
+      assetNameRegExp: /\.css$/g,
+      cssProcessor: require('cssnano')
+    })
+  ]
 };

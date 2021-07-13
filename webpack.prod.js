@@ -89,6 +89,9 @@ module.exports = {
     new OptimizeCSSAssetsPlugin({
       assetNameRegExp: /\.css$/g,
       cssProcessor: require('cssnano')
+    }),
+    new HtmlWebpackPlugin({
+      
     })
   ]
 };

@@ -4,6 +4,40 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+const glob = require('glob');
+
+const setMPA = () => {
+  const entry = {};
+  const htmlWebpackPlugins = [];
+  const entryFiles = glob.sync(path.join(__dirname, './src/*/index.js'));
+  Object.keys(entryFiles).map((index) => {
+    const entryFile = entryFiles[index];
+    const match = entryFile.match(/src\/(.*)\/index\.js/)
+    const pageName = match && match[1];
+    entry[pageName] = entryFile;
+    htmlWebpackPlugins.push(
+      new HtmlWebpackPlugin({
+        template: path.join(__dirname, `src/${pageName}/index.html`),
+        filename: `${pageName}.html`,
+        chunks: [pageName],
+        inject: true,
+        minify: {
+          html5: true,
+          collapseWhitespace: true,
+          preserveLineBreaks: false,
+          minifyCSS: true,
+          minifyJS: true,
+          removeComments: false,
+        }
+      }))
+  })
+  return {
+    entry,
+    htmlWebpackPlugins
+  }
+}
+
 //解析css 
 //需要用到css-loader 并且转换为commonjs对象插入到样式中
 //需要用到style-loader 将央视通过<style>标签插入到head中
@@ -13,14 +47,15 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 //如果有变化，就会把上一次的修改时间与这一次的修改时间做对比
 //如果发现不一致，会把文件的修改缓存起来，等待的时间内如果其他文件也发生变化
 //会把变化的文件列表一起构建到打包模块中 build
-
+const { entry, htmlWebpackPlugins } = setMPA();
 
 module.exports = {
   // entry: './src/index.js',//入口  单入口字符串 多入口 { }
-  entry: {//多入口
-    index: './src/index.js',
-    search: './src/search.js'
-  },
+  // entry: {//多入口
+  //   index: './src/index.js',
+  //   search: './src/search.js'
+  // },
+  entry: entry,
   output: {//出口
     path: path.join(__dirname, 'dist'),//指定输出文件夹 dist 目录
     filename: '[name]_[chunkhash:8].js',//打包出的文件名 chunkhash:8 文件指纹设置 取前8位 下划线为了区分
@@ -49,7 +84,22 @@ module.exports = {
           // 'style-loader',
           MiniCssExtractPlugin.loader,
           'css-loader',
-          'less-loader'
+          'less-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              plugins: () => [
+                require('autoprefixer')({
+                  browsers: ['last 2 version', '>1%', 'ios 7']
+                })]
+            }
+          }, {
+            loader: 'px2rem-loader',
+            options: {
+              remUnit: 75,//代表1rem75px
+              remPrecesion: 8,//px转换成rem小数点后位数
+            }
+          }
         ]
       },
       // {
@@ -90,33 +140,34 @@ module.exports = {
       assetNameRegExp: /\.css$/g,
       cssProcessor: require('cssnano')
     }),
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'src/index.html'),
-      filename: 'index.html',
-      chunks: ['index'],
-      inject: true,
-      minify: {
-        html5: true,
-        collapseWhitespace: true,
-        preserveLineBreaks: false,
-        minifyCSS: true,
-        minifyJS: true,
-        removeComments: false,
-      }
-    }),
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'src/search.html'),
-      filename: 'search.html',
-      chunks: ['search'],
-      inject: true,
-      minify: {
-        html5: true,
-        collapseWhitespace: true,
-        preserveLineBreaks: false,
-        minifyCSS: true,
-        minifyJS: true,
-        removeComments: false,
-      }
-    })
-  ]
+    // new HtmlWebpackPlugin({
+    //   template: path.join(__dirname, 'src/index.html'),
+    //   filename: 'index.html',
+    //   chunks: ['index'],
+    //   inject: true,
+    //   minify: {
+    //     html5: true,
+    //     collapseWhitespace: true,
+    //     preserveLineBreaks: false,
+    //     minifyCSS: true,
+    //     minifyJS: true,
+    //     removeComments: false,
+    //   }
+    // }),
+    // new HtmlWebpackPlugin({
+    //   template: path.join(__dirname, 'src/search.html'),
+    //   filename: 'search.html',
+    //   chunks: ['search'],
+    //   inject: true,
+    //   minify: {
+    //     html5: true,
+    //     collapseWhitespace: true,
+    //     preserveLineBreaks: false,
+    //     minifyCSS: true,
+    //     minifyJS: true,
+    //     removeComments: false,
+    //   }
+    // }),
+    new CleanWebpackPlugin(),
+  ].concat(htmlWebpackPlugins)
 };

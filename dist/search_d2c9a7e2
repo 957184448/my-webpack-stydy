@@ -1,0 +1,9 @@
+.search-text {
+  font-size: 0.266667rem;
+  color: #f00;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+

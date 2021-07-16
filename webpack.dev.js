@@ -2,6 +2,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 //解析css 
 //需要用到css-loader 并且转换为commonjs对象插入到样式中
 //需要用到style-loader 将央视通过<style>标签插入到head中
@@ -65,12 +66,14 @@ module.exports = {
     ]
   },
   plugins: [
-    // new webpack.HotModuleReplacementPlugin()
+    new webpack.HotModuleReplacementPlugin(),
+    new CleanWebpackPlugin(),
   ],
   devServer: {
     contentBase: './dist',
     hot: true
-  }
+  },
+  
 
 
 };
